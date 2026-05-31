@@ -238,9 +238,89 @@ tr.total td{border:none}
 .type-pill.active{background:var(--mint);color:var(--bg);border-color:var(--mint);font-weight:600}
 .type-pill.inc.active{background:var(--mint);color:var(--bg)}
 .type-pill.exp.active{background:var(--neg);color:#fff;border-color:var(--neg)}
+
+/* ========== Password Gate ========== */
+#gate{position:fixed;inset:0;background:radial-gradient(ellipse at center,#16232B 0%,#042F34 70%);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;animation:gFade .25s ease-out}
+@keyframes gFade{from{opacity:0}to{opacity:1}}
+#gate.unlocked{opacity:0;pointer-events:none;transition:opacity .4s ease-out}
+.gate-card{background:rgba(255,255,255,.02);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:42px 36px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.gate-logo{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#7c5cff,#9a82ff);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:30px;margin:0 auto 22px;box-shadow:0 8px 32px rgba(124,92,255,.4);font-family:Poppins,sans-serif}
+.gate-card h1{font-family:Poppins,sans-serif;font-weight:700;font-size:24px;color:#fff;margin-bottom:8px;letter-spacing:-.01em}
+.gate-card p{color:rgba(228,238,240,.6);font-size:13px;margin-bottom:28px}
+#gate-pw{width:100%;padding:14px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#fff;font-size:15px;font-family:Poppins,Noto Sans Thai,sans-serif;text-align:center;letter-spacing:.05em;margin-bottom:14px}
+#gate-pw::placeholder{color:rgba(228,238,240,.35)}
+#gate-pw:focus{outline:none;border-color:#9a82ff;box-shadow:0 0 0 4px rgba(124,92,255,.15)}
+#gate-btn{width:100%;padding:14px;background:linear-gradient(135deg,#7c5cff,#9a82ff);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:Poppins,Noto Sans Thai,sans-serif;letter-spacing:.02em;box-shadow:0 6px 20px rgba(124,92,255,.3);transition:.2s}
+#gate-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,92,255,.4)}
+#gate-btn:disabled{opacity:.6;cursor:wait}
+#gate-err{color:#ff8a95;font-size:12px;margin-top:14px;min-height:18px;font-weight:500}
+.gate-shake{animation:gShake .4s}
+@keyframes gShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-8px)}}
+.gate-hint{margin-top:24px;font-size:11px;color:rgba(228,238,240,.4);letter-spacing:.04em}
 </style>
 </head>
 <body>
+
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">S</div>
+    <h1>SHIFT × Easy Space</h1>
+    <p>กรุณาใส่รหัสผ่านเพื่อดูข้อมูล</p>
+    <form id="gate-form" autocomplete="off">
+      <input type="password" id="gate-pw" placeholder="รหัสผ่าน" autocomplete="current-password" autofocus>
+      <button type="submit" id="gate-btn">เข้าระบบ</button>
+      <div id="gate-err"></div>
+    </form>
+    <div class="gate-hint">🔒 รหัสจะถูกจดในเครื่องคุณ ไม่ต้องใส่ใหม่ทุกครั้ง</div>
+  </div>
+</div>
+
+<script>
+// ============ Password Gate ============
+// Default: shift2026 — เปลี่ยนรหัสได้โดยคำนวณ SHA-256 ของรหัสใหม่แล้วแทนใน PW_HASH ด้านล่าง
+// คำสั่ง terminal: python3 -c "import hashlib; print(hashlib.sha256('รหัสใหม่'.encode()).hexdigest())"
+const PW_HASH = 'f44d8309c4737d6224da6751e6dd81f2e20e6b4bc298c6eafc86125eeb4c1c5a';
+const PW_TOKEN_KEY = 'cafe-finance-auth';
+async function sha256(s){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+(async function gateCheck(){
+  // If already authed (token matches hash), unlock immediately
+  if(localStorage.getItem(PW_TOKEN_KEY) === PW_HASH){
+    document.getElementById('gate').style.display = 'none';
+    return;
+  }
+  // Show gate, wait for password
+  const form = document.getElementById('gate-form');
+  const input = document.getElementById('gate-pw');
+  const btn = document.getElementById('gate-btn');
+  const err = document.getElementById('gate-err');
+  const card = document.querySelector('.gate-card');
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    err.textContent = '';
+    btn.disabled = true; btn.textContent = 'ตรวจสอบ...';
+    const pw = input.value;
+    const h = await sha256(pw);
+    if(h === PW_HASH){
+      localStorage.setItem(PW_TOKEN_KEY, PW_HASH);
+      btn.textContent = '✓ เข้าระบบ';
+      const gate = document.getElementById('gate');
+      gate.classList.add('unlocked');
+      setTimeout(()=>gate.remove(), 400);
+    } else {
+      err.textContent = 'รหัสผ่านไม่ถูกต้อง';
+      card.classList.remove('gate-shake');
+      void card.offsetWidth; // restart animation
+      card.classList.add('gate-shake');
+      input.value = ''; input.focus();
+      btn.disabled = false; btn.textContent = 'เข้าระบบ';
+    }
+  };
+})();
+</script>
+
 <header class="topbar"><div class="topbar-inner">
   <div class="brand"><div class="logo">S</div><div><h1>SHIFT × Easy Space</h1><small>Executive Financial Dashboard</small></div></div>
   <div style="display:flex;align-items:center;gap:10px">
