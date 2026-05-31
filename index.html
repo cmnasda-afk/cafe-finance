@@ -751,7 +751,7 @@ const SHEET_CONFIG = [
   { shopId:'easyspace', name:'EASY SPACE Ledger', id:'1crInnFQJgZ7_SP050OUtEaqfB14zSK8g',
     tabs:[{name:'รายรับ',type:'income'},{name:'รายจ่าย',type:'expense'}] }
 ];
-const SYNC_KEY = 'cafe-finance-sync-v1';
+const SYNC_KEY = 'cafe-finance-sync-v2';
 
 function loadXLSX(){
   return new Promise((res,rej)=>{
@@ -794,6 +794,7 @@ function parseRows(rows, shopId, type){
     else if(col.category==null && (h.includes('หมวด')||h==='ประเภท')) col.category=i;
     else if(col.project==null && h.includes('โครงการ')) col.project=i;
     else if(col.grossAmount==null && (h.includes('จำนวนเงิน')||h.includes('รวม vat')||(h.includes('ยอดสุทธิ')&&!h.includes('หัก')))) col.grossAmount=i;
+    else if(col.salesGross==null && (h.includes('ยอดขาย')||(h.includes('ก่อนลด')))) col.salesGross=i;
     else if(col.discount==null && h.includes('ลด')) col.discount=i;
     else if(col.vat==null && (h==='vat 7%'||h==='vat'||h.startsWith('vat'))) col.vat=i;
     else if(col.withholdingFlag==null && h.includes('หัก ณ ที่จ่าย') && !h.includes('ภาษีหัก')) col.withholdingFlag=i;
