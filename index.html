@@ -397,6 +397,35 @@ function buildDupeSkip(){
   }
   return skip;
 }
+
+// ============ Expense Groups ============
+const EXPENSE_GROUPS_MAP = [
+  ['🍶 ต้นทุนขาย', ['ค่าวัตถุดิบ — กาแฟ','ค่าวัตถุดิบ — นม/ครีม','ค่าวัตถุดิบ — ไซรัป/ผง','ค่าวัตถุดิบ — ผลไม้สด','ค่าวัตถุดิบ — ของคาว','ค่าวัตถุดิบ — น้ำเปล่า','ค่าเบเกอรี่ (ซื้อมาขาย)','วัตถุดิบ','ต้นทุนบริการ – ค่าอาหาร','ภาชนะอุปกรณ์เสริฟ','ภาชนะและอุปกรณ์เสิร์ฟ'], '#7c5cff'],
+  ['👨‍💼 บุคลากร', ['ค่าจ้างพนักงาน','ค่าใช้จ่ายประกันสังคม','ประกันสังคม','ค่าจ้าง/แม่บ้าน'], '#3b82f6'],
+  ['💡 สาธารณูปโภค', ['ค่าน้ำ','ค่าไฟ','ค่าอินเทอร์เน็ต','ค่าน้ำ-ไฟ'], '#9a82ff'],
+  ['🏪 ดำเนินงาน', ['ค่าเช่าร้าน','ค่าอุปกรณ์/ของใช้','ค่าซ่อมบำรุง','ค่าขนส่ง','ค่าการตลาด/โฆษณา','ค่าบริการพื้นที่','สิ้นเปลือง','วัสดุสิ้นเปลือง'], '#60a5fa'],
+  ['🔨 ตั้งร้าน/ลงทุน', ['งานก่อสร้าง','งานออกแบบ','งานบิวอิน','อุปกรณ์หลัก','อุปกรณ์','ระบบแอร์','ระบบรักษาความปลอดภัย','ระบบความปลอดภัย','ตกแต่ง','ระบบหลังบ้าน','งานเฟอร์นิเจอร์ CO','งานเฟอร์นิเจอร์ CAFE','งานขยายพื้นที่','อุปกรณ์เบ็ดเตล็ดหลังบาร์','ต้นทุนก่อสร้าง/ปรับปรุง','งาเฟอร์นิเจอร์ CO'], '#0a1530'],
+  ['❓ อื่นๆ', ['อื่นๆ','อื่น ๆ'], '#b5a6ff'],
+];
+function getExpGroup(cat){
+  const c = (cat||'').trim();
+  for(const [grp, cats] of EXPENSE_GROUPS_MAP){
+    if(cats.includes(c)) return grp;
+  }
+  // Smart fallback by keyword
+  if(!c) return '❓ อื่นๆ';
+  if(c.includes('วัตถุดิบ')||c.includes('เบเกอรี่')) return '🍶 ต้นทุนขาย';
+  if(c.includes('พนักงาน')||c.includes('ประกันสังคม')||c.includes('แม่บ้าน')) return '👨‍💼 บุคลากร';
+  if(c.includes('ไฟ')||c.includes('น้ำ')||c.includes('อินเทอร์เน็ต')) return '💡 สาธารณูปโภค';
+  if(c.includes('เช่า')||c.includes('ขนส่ง')||c.includes('ตลาด')||c.includes('สิ้นเปลือง')) return '🏪 ดำเนินงาน';
+  if(c.includes('งาน')||c.includes('อุปกรณ์')||c.includes('ตกแต่ง')||c.includes('ระบบ')||c.includes('เฟอร์นิเจอร์')) return '🔨 ตั้งร้าน/ลงทุน';
+  return '❓ อื่นๆ';
+}
+function getGroupColor(grp){
+  for(const [g,,col] of EXPENSE_GROUPS_MAP){if(g===grp) return col;}
+  return '#b5a6ff';
+}
+
 function dedup(arr){
   const skip = buildDupeSkip();
   return arr.filter(t=>!skip.has(t.shopId+'|'+t.date+'|'+Math.round((t.grossAmount||0)*100)/100+'|'+t.type));
@@ -481,6 +510,11 @@ function renderDash(){
   const momExp = expPrev>0 ? ((exp-expPrev)/expPrev*100) : null;
   const momIncDisp = momInc!=null ? `vs เดือนก่อน <b style="color:${momInc>=0?'var(--mint)':'var(--neg)'}">${momInc>=0?'↑':'↓'} ${Math.abs(momInc).toFixed(1)}%</b>` : '';
   const momExpDisp = momExp!=null ? `vs เดือนก่อน <b style="color:${momExp<=0?'var(--mint)':'var(--neg)'}">${momExp>=0?'↑':'↓'} ${Math.abs(momExp).toFixed(1)}%</b>` : '';
+  // Gross margin (Income - COGS) / Income
+  const cogs = txMonth.filter(t=>t.type==='expense' && getExpGroup(t.category)==='🍶 ต้นทุนขาย').reduce((s,t)=>s+netOf(t),0);
+  const labor = txMonth.filter(t=>t.type==='expense' && getExpGroup(t.category)==='👨‍💼 บุคลากร').reduce((s,t)=>s+netOf(t),0);
+  const gm = (inc>0) ? ((inc-cogs)/inc*100) : null;
+  const laborPct = (inc>0) ? (labor/inc*100) : null;
   // Today's transactions
   const todayKey = new Date().toISOString().slice(0,10);
   const todayTx = txnsFor(state.shop).filter(t=>t.date===todayKey);
@@ -532,6 +566,15 @@ function renderDash(){
     <div class="card"><h3>📊 รายรับ vs รายจ่าย 6 เดือนล่าสุด</h3><div class="chart-wrap"><canvas id="cIE"></canvas></div></div>
     ${inc>0?`<div class="card"><h3>💰 รายรับแยกประเภท (${monthLbl(state.mKey)})</h3><div class="chart-wrap short"><canvas id="cInc"></canvas></div><div style="margin-top:10px" id="incRows"></div></div>`:''}
     ${exp>0?`<div class="card"><h3>🥧 รายจ่ายแยกหมวด (${monthLbl(state.mKey)})</h3><div class="chart-wrap short"><canvas id="cCat"></canvas></div><div style="margin-top:10px" id="catRows"></div></div>`:''}
+    ${exp>0?`<div class="card"><h3>📂 รายจ่ายแยกหมวดใหญ่ — Business view</h3>${(()=>{
+      const byGrp = {};
+      txMonth.filter(t=>t.type==='expense').forEach(t=>{const g=getExpGroup(t.category);byGrp[g]=byGrp[g]||{amt:0,count:0,cats:new Set()};byGrp[g].amt+=netOf(t);byGrp[g].count++;byGrp[g].cats.add(t.category||'-')});
+      const order = EXPENSE_GROUPS_MAP.map(([g])=>g);
+      const entries = order.filter(g=>byGrp[g]).map(g=>[g, byGrp[g]]);
+      const totalAll = entries.reduce((s,[,v])=>s+v.amt, 0);
+      if(!entries.length) return '<div class="empty">ไม่มีข้อมูล</div>';
+      return entries.map(([grp,v])=>{const pct=totalAll?v.amt/totalAll*100:0;const col=getGroupColor(grp);return `<div style="padding:14px 16px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px"><div style="font-weight:600;font-size:15px;color:var(--ink)">${esc(grp)} <span class="dim" style="font-size:11px;font-weight:400">(${v.count} รายการ · ${v.cats.size} หมวด)</span></div><div style="font-weight:700;font-size:15px;color:${col}">฿${fmt(v.amt)}</div></div><div style="height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${col};border-radius:3px"></div></div><div style="font-size:11px;color:var(--ink3);margin-top:4px">${pct.toFixed(1)}% ของรายจ่ายทั้งเดือน</div></div>`}).join('');
+    })()}</div>`:''}
     <div class="card"><h3>🏆 5 หมวดสูงสุดเดือนนี้</h3>${(()=>{
       const byCat = {};
       txMonth.forEach(t=>{const c=t.category||'ไม่ระบุ';byCat[c]=byCat[c]||{inc:0,exp:0,count:0};if(t.type==='income') byCat[c].inc+=netOf(t); else byCat[c].exp+=netOf(t); byCat[c].count++});
