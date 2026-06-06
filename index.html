@@ -789,12 +789,12 @@ render();
 const SHEET_CONFIG = [
   { shopId:'cafe-setup', name:'EASY SPACE setup', id:'10J6p85-X-_UWWjOJ6FB9aaaEhMIULUuv',
     tabs:[{name:'ข้อมูลรายจ่าย', type:'expense'}] },
-  { shopId:'shift', name:'SHIFT KKC', id:'13PBGwU-Ch9So24e7G_FNsrr_s7Q3YfDU',
+  { shopId:'shift', name:'SHIFT KKC', id:'1uDv7hTGjbNOhcuVPsvMBPDSWcsOlhI0D',
     tabs:[{name:'รายรับ',type:'income'},{name:'รายจ่าย',type:'expense'}] },
   { shopId:'easyspace', name:'EASY SPACE Ledger', id:'1crInnFQJgZ7_SP050OUtEaqfB14zSK8g',
     tabs:[{name:'รายรับ',type:'income'},{name:'รายจ่าย',type:'expense'}] }
 ];
-const SYNC_KEY = 'cafe-finance-sync-v2';
+const SYNC_KEY = 'cafe-finance-sync-v3';
 
 function loadXLSX(){
   return new Promise((res,rej)=>{
@@ -907,8 +907,8 @@ function setSyncStatus(msg, kind){
 
 // Multi-proxy fallback with retry
 const PROXIES = [
+  u => `https://api.cors.lol/?url=${encodeURIComponent(u)}`,
   u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u => `https://proxy.cors.sh/${u}`,
 ];
