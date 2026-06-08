@@ -283,6 +283,18 @@ tr.total td{border:none}
   .cat-tile .amount{font-size:16px}
   .cat-tile .ico{font-size:19px}
 }
+
+/* 2-column dashboard layout */
+.dash-row{display:grid;gap:14px;margin-bottom:14px}
+.dash-row.hero-row{grid-template-columns:1.4fr 1fr}
+.dash-row.split{grid-template-columns:1fr 1fr}
+.dash-row > *{margin-bottom:0}
+.dash-row .card{margin-bottom:0;height:100%}
+.side-kpis{display:flex;flex-direction:column;gap:14px;height:100%}
+.side-kpis > .k{flex:1;min-height:120px;display:flex;flex-direction:column;justify-content:center}
+@media(max-width:900px){
+  .dash-row.hero-row,.dash-row.split{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -630,17 +642,20 @@ function renderDash(){
         </div>
       </div>
     </div>`:''}
-    <div class="card hero">
-      <div class="hero-row">
-        <div><div class="hero-title">${esc(shop.name)}</div><div class="hero-month">${monthLbl(state.mKey)}</div></div>
-        <select id="mpick" class="m-pick">${months.map(m=>`<option value="${m}" ${m===state.mKey?'selected':''}>${monthLbl(m)}</option>`).join('')}</select>
+    <div class="dash-row hero-row">
+      <div class="card hero">
+        <div class="hero-row">
+          <div><div class="hero-title">${esc(shop.name)}</div><div class="hero-month">${monthLbl(state.mKey)}</div></div>
+          <select id="mpick" class="m-pick">${months.map(m=>`<option value="${m}" ${m===state.mKey?'selected':''}>${monthLbl(m)}</option>`).join('')}</select>
+        </div>
+        <div class="hero-value" style="color:#fff">฿${fmt(profit)}</div>
+        <div class="hero-sub">${profit>=0?'กำไรเดือนนี้':'ขาดทุนเดือนนี้'} · รายรับ ฿${fmt(inc)} · รายจ่าย ฿${fmt(exp)}</div>
       </div>
-      <div class="hero-value" style="color:${profit>=0?'#fff':'#fff'}">฿${fmt(profit)}</div>
-      <div class="hero-sub">${profit>=0?'กำไรเดือนนี้':'ขาดทุนเดือนนี้'} · รายรับ ฿${fmt(inc)} · รายจ่าย ฿${fmt(exp)}</div>
-    </div>
-    <div class="kpi">
-      <div class="k pos"><div class="lab">💰 รายรับ</div><div class="val">฿${fmt(inc)}</div>${target?`<div class="delta">เป้า ฿${fmt(target)} (${progress.toFixed(1)}%)</div>`:''}</div>
-      <div class="k neg"><div class="lab">💸 รายจ่าย</div><div class="val">฿${fmt(exp)}</div>${unpaid?`<div class="delta" style="color:var(--warn)">⏳ ค้าง ฿${fmt(unpaid)}</div>`:''}</div>
+      <div class="side-kpis">
+        <div class="k pos"><div class="lab">💰 รายรับ</div><div class="val">฿${fmt(inc)}</div>${target?`<div class="delta">เป้า ฿${fmt(target)} (${progress.toFixed(1)}%)</div>`:momIncDisp?`<div class="delta">${momIncDisp}</div>`:''}</div>
+        <div class="k neg"><div class="lab">💸 รายจ่าย</div><div class="val">฿${fmt(exp)}</div>${unpaid?`<div class="delta" style="color:var(--warn)">⏳ ค้าง ฿${fmt(unpaid)}</div>`:momExpDisp?`<div class="delta">${momExpDisp}</div>`:''}</div>
+        ${gm!=null?`<div class="k"><div class="lab">📈 Gross Margin</div><div class="val" style="color:${gm>=60?'var(--mint)':gm>=40?'var(--warn)':'var(--neg)'};font-size:22px">${gm.toFixed(1)}%</div><div class="delta">ต้นทุนขาย ฿${fmt(cogs)}</div></div>`:''}
+      </div>
     </div>
     <div class="card"><h3>📊 รายรับ vs รายจ่าย 6 เดือนล่าสุด</h3><div class="chart-wrap"><canvas id="cIE"></canvas></div></div>
     ${inc>0?`<div class="card"><div class="cat-section">
