@@ -257,6 +257,32 @@ tr.total td{border:none}
 .gate-shake{animation:gShake .4s}
 @keyframes gShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-8px)}}
 .gate-hint{margin-top:24px;font-size:11px;color:rgba(228,238,240,.4);letter-spacing:.04em}
+
+/* Category tiles grid */
+.cat-section{margin-bottom:18px}
+.cat-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 4px}
+.cat-section-title{font-size:13px;color:var(--ink2);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.cat-section-total{font-size:16px;font-weight:700}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.cat-tile{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px 16px;transition:.2s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px;min-height:108px}
+.cat-tile:hover{border-color:var(--mint);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.cat-tile.exp:hover{border-color:var(--neg)}
+.cat-tile .top-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.cat-tile .ico{font-size:22px;line-height:1}
+.cat-tile .pct{font-size:10px;color:var(--ink3);font-weight:600;background:rgba(255,255,255,.04);padding:2px 8px;border-radius:99px}
+.cat-tile .name{font-size:12px;color:var(--ink2);font-weight:500;line-height:1.35;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cat-tile .amount{font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.02em;line-height:1.1}
+.cat-tile .sub{font-size:10px;color:var(--ink3);font-weight:500}
+.cat-tile .bar-bg{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.05)}
+.cat-tile .bar{position:absolute;bottom:0;left:0;height:3px;background:var(--mint);border-radius:0 3px 3px 0;transition:width .4s ease-out}
+.cat-tile.exp .bar{background:var(--neg)}
+.cat-tile.inc .bar{background:var(--mint)}
+@media(max-width:600px){
+  .cat-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .cat-tile{padding:12px 13px;min-height:96px}
+  .cat-tile .amount{font-size:16px}
+  .cat-tile .ico{font-size:19px}
+}
 </style>
 </head>
 <body>
@@ -421,6 +447,59 @@ function getExpGroup(cat){
   if(c.includes('งาน')||c.includes('อุปกรณ์')||c.includes('ตกแต่ง')||c.includes('ระบบ')||c.includes('เฟอร์นิเจอร์')) return '🔨 ตั้งร้าน/ลงทุน';
   return '❓ อื่นๆ';
 }
+
+function getCatIcon(cat){
+  const c = (cat||'').toLowerCase();
+  // Beverages / drinks
+  if(c.includes('เครื่องดื่ม')||c==='coffee'||c.includes('hot')||c.includes('iced')) return '☕';
+  if(c.includes('กาแฟ')) return '☕';
+  if(c.includes('นม')||c.includes('ครีม')||c.includes('milk')) return '🥛';
+  if(c.includes('ชา')||c.includes('tea')) return '🍵';
+  if(c.includes('โซดา')||c.includes('soda')) return '🥤';
+  if(c.includes('ไซรัป')||c.includes('ผง')) return '🍯';
+  if(c.includes('ผลไม้')) return '🍓';
+  if(c.includes('น้ำเปล่า')||c.includes('น้ำดื่ม')) return '💧';
+  if(c.includes('ของคาว')) return '🍳';
+  if(c.includes('เบเกอรี่')||c.includes('เค้ก')||c.includes('cake')) return '🧁';
+  // Operations
+  if(c.includes('ไฟ')) return '💡';
+  if(c.includes('น้ำ')&&!c.includes('น้ำเปล่า')) return '🚰';
+  if(c.includes('อินเทอร์เน็ต')||c.includes('net')) return '🛜';
+  if(c.includes('เช่า')) return '🏠';
+  if(c.includes('จ้าง')||c.includes('พนักงาน')||c.includes('แม่บ้าน')) return '👨‍💼';
+  if(c.includes('การตลาด')||c.includes('โฆษณา')) return '📢';
+  if(c.includes('อุปกรณ์')||c.includes('ของใช้')) return '🛠';
+  if(c.includes('ขนส่ง')) return '🚚';
+  if(c.includes('ซ่อม')) return '🔧';
+  if(c.includes('ประกันสังคม')||c.includes('ประกัน')) return '🛡';
+  // Cafe services
+  if(c.includes('ห้องประชุม')||c.includes('meeting')) return '🪑';
+  if(c.includes('ออฟฟิศ')||c.includes('office')) return '🏢';
+  if(c.includes('บริการพื้นที่')) return '🏬';
+  if(c.includes('อาหาร')||c.includes('food')) return '🍽';
+  if(c.includes('ค่ามัดจำ')||c.includes('มัดจำ')) return '💵';
+  if(c.includes('ค่าประกันพื้นที่')) return '🔒';
+  if(c.includes('ค่าบริการ')) return '🪪';
+  if(c.includes('workshop')) return '🎓';
+  if(c.includes('golf')) return '⛳';
+  // Setup / construction
+  if(c.includes('ก่อสร้าง')) return '🏗';
+  if(c.includes('ออกแบบ')) return '📐';
+  if(c.includes('บิวอิน')||c.includes('เฟอร์นิเจอร์')) return '🪟';
+  if(c.includes('แอร์')||c.includes('air')) return '❄️';
+  if(c.includes('ตกแต่ง')) return '🎨';
+  if(c.includes('สิ้นเปลือง')) return '🧻';
+  if(c.includes('ขยายพื้นที่')) return '🚧';
+  if(c.includes('ความปลอดภัย')||c.includes('รักษา')) return '🎥';
+  if(c.includes('หลังบ้าน')||c.includes('ระบบ')) return '⚙️';
+  if(c.includes('ภาชนะ')||c.includes('เสิร์ฟ')||c.includes('เสริฟ')) return '🍴';
+  // Income
+  if(c.includes('ลูกค้า')||c.includes('บริษัท')||c.includes('ลูกค้าโอน')) return '👥';
+  if(c.includes('ขาย')||c.includes('โอนรายได้')) return '💸';
+  if(c.includes('อื่น')) return '📦';
+  return '📦';
+}
+
 function getGroupColor(grp){
   for(const [g,,col] of EXPENSE_GROUPS_MAP){if(g===grp) return col;}
   return '#b5a6ff';
@@ -564,8 +643,30 @@ function renderDash(){
       <div class="k neg"><div class="lab">💸 รายจ่าย</div><div class="val">฿${fmt(exp)}</div>${unpaid?`<div class="delta" style="color:var(--warn)">⏳ ค้าง ฿${fmt(unpaid)}</div>`:''}</div>
     </div>
     <div class="card"><h3>📊 รายรับ vs รายจ่าย 6 เดือนล่าสุด</h3><div class="chart-wrap"><canvas id="cIE"></canvas></div></div>
-    ${inc>0?`<div class="card"><h3>💰 รายรับแยกประเภท (${monthLbl(state.mKey)})</h3><div class="chart-wrap short"><canvas id="cInc"></canvas></div><div style="margin-top:10px" id="incRows"></div></div>`:''}
-    ${exp>0?`<div class="card"><h3>🥧 รายจ่ายแยกหมวด (${monthLbl(state.mKey)})</h3><div class="chart-wrap short"><canvas id="cCat"></canvas></div><div style="margin-top:10px" id="catRows"></div></div>`:''}
+    ${inc>0?`<div class="card"><div class="cat-section">
+      <div class="cat-section-head">
+        <div class="cat-section-title">🟢 รายรับแยกประเภท (${monthLbl(state.mKey)})</div>
+        <div class="cat-section-total" style="color:var(--mint)">฿${fmt(inc)}</div>
+      </div>
+      <div class="cat-grid">${(()=>{
+        const byCat = {};
+        txMonth.filter(t=>t.type==='income').forEach(t=>{const cc=t.category||'ไม่ระบุ';byCat[cc]=byCat[cc]||{amt:0,count:0};byCat[cc].amt+=netOf(t);byCat[cc].count++});
+        const entries = Object.entries(byCat).sort((a,b)=>b[1].amt-a[1].amt);
+        return entries.map(([cat,v])=>{const pct=inc?v.amt/inc*100:0;return `<div class="cat-tile inc" onclick="drillCat('${esc(cat).replace(/'/g,'&#39;')}','income')"><div class="top-row"><div class="ico">${getCatIcon(cat)}</div><div class="pct">${pct.toFixed(1)}%</div></div><div class="name">${esc(cat)}</div><div class="amount">฿${fmt(v.amt)}</div><div class="sub">${v.count} รายการ</div><div class="bar-bg"></div><div class="bar" style="width:${pct}%"></div></div>`}).join('');
+      })()}</div>
+    </div></div>`:''}
+    ${exp>0?`<div class="card"><div class="cat-section">
+      <div class="cat-section-head">
+        <div class="cat-section-title">🔴 รายจ่ายแยกหมวด (${monthLbl(state.mKey)})</div>
+        <div class="cat-section-total" style="color:var(--neg)">฿${fmt(exp)}</div>
+      </div>
+      <div class="cat-grid">${(()=>{
+        const byCat = {};
+        txMonth.filter(t=>t.type==='expense').forEach(t=>{const cc=t.category||'ไม่ระบุ';byCat[cc]=byCat[cc]||{amt:0,count:0};byCat[cc].amt+=netOf(t);byCat[cc].count++});
+        const entries = Object.entries(byCat).sort((a,b)=>b[1].amt-a[1].amt);
+        return entries.map(([cat,v])=>{const pct=exp?v.amt/exp*100:0;return `<div class="cat-tile exp" onclick="drillCat('${esc(cat).replace(/'/g,'&#39;')}','expense')"><div class="top-row"><div class="ico">${getCatIcon(cat)}</div><div class="pct">${pct.toFixed(1)}%</div></div><div class="name">${esc(cat)}</div><div class="amount">฿${fmt(v.amt)}</div><div class="sub">${v.count} รายการ</div><div class="bar-bg"></div><div class="bar" style="width:${pct}%"></div></div>`}).join('');
+      })()}</div>
+    </div></div>`:''}
     ${exp>0?`<div class="card"><h3>📂 รายจ่ายแยกหมวดใหญ่ — Business view</h3>${(()=>{
       const byGrp = {};
       txMonth.filter(t=>t.type==='expense').forEach(t=>{const g=getExpGroup(t.category);byGrp[g]=byGrp[g]||{amt:0,count:0,cats:new Set()};byGrp[g].amt+=netOf(t);byGrp[g].count++;byGrp[g].cats.add(t.category||'-')});
@@ -1034,6 +1135,17 @@ window.showDupes = showDupes;
 window.ignoreDupe = ignoreDupe;
 
 
+
+
+function drillCat(cat, type){
+  state.view='list';
+  state.filter.type = type;
+  state.filter.q = cat;
+  saveState();
+  render();
+  window.scrollTo(0,0);
+}
+window.drillCat = drillCat;
 
 // First-time hint
 if(!localStorage.getItem('cafe-finance-hint-shown')){
